@@ -4,6 +4,7 @@ import torch
 import time
 from test_utils import logTime
 
+
 # Contributes to initial load time, place elsewhere
 MODEL = whisper.load_model("small")
 

@@ -18,13 +18,15 @@ load_dotenv()
 PICOVOICE_ACCESS_KEY = os.environ.get('PICOVOICE_ACCESS_KEY')
 
 model_path = "models\\Hey-Neo_en_windows_v3_0_0.ppn"
-porcupine = pvporcupine.create(keywords= "",model_path=[model_path], access_key=PICOVOICE_ACCESS_KEY)
+
+
+porcupine = pvporcupine.create(keyword_paths= [model_path], access_key=PICOVOICE_ACCESS_KEY)
 FORMAT = pyaudio.paInt16
 CHANNELS = 1  
 RATE = 16000
 CHUNK = 1024
 SILENCE_THRESHOLD = 200
-SILENCE_DURATION = 3  
+SILENCE_DURATION = 1
 OUTPUT_FILE = "recorded_audio.wav"
 INPUT_DEVICE_INDEX = 9
 
@@ -77,8 +79,7 @@ def record_audio():
     getTextFromWavFile(OUTPUT_FILE)
     
     print(f"Audio recorded and saved as {OUTPUT_FILE}")
-    
-    
+
 def listen_for_keyword():
     """Thread for listening to keyword (e.g., "NEO")"""
     print("Listening for 'NEO'...")
@@ -95,15 +96,16 @@ def listen_for_keyword():
         
         if keyword_index >= 0:
             print("Keyword 'NEO' detected! Starting recording...")
-            # Start the recording in a new thread
             recording_thread = threading.Thread(target=record_audio)
             recording_thread.start()
-            break  # Stop listening once the keyword is detected
+            recording_thread.join()  # Wait for the recording to finish
+            print("Resuming keyword detection...")
 
 def main():
     print("Cuda availability", torch.cuda.is_available())
     recording_thread = threading.Thread(target=listen_for_keyword)
     recording_thread.start()
+    recording_thread.join()
 
 if __name__ =="__main__":
     main()

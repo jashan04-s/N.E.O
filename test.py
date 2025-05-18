@@ -11,6 +11,8 @@ def main():
     content = input("Please tell me what you would like to ask N.E.O\n")
 
     print(content)
+    
+    
 
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
