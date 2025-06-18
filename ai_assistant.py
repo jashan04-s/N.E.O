@@ -55,20 +55,25 @@ class AIAssistant:
             print("No assistants found.")
         
         return assistants
-
-    def _get_assistant_id(self):
+    
+    def _ensure_assistant(self):
+        if hasattr(self, "_assistant_id") and self._assistant_id:
+            return self._assistant_id
 
         assistants = self._list_assistants()
-        neo_model = None
 
         if assistants and assistants.data:
             for assistant in assistants.data:
-                if (assistant.name == self._assistant_name and assistant.model == self._model):
+                if assistant.name == self._assistant_name and assistant.model == self._model:
                     print("Assistant already exists. Skipping creation.")
-                    return assistant.id
+                    self._assistant_id = assistant.id
+                    return self._assistant_id
 
         neo_model = self._create_assistant()
-        return neo_model.id
+
+        if neo_model:
+            self._assistant_id = neo_model.id
+            return self._assistant_id
     
     def _ensure_thread(self):
         if not self._thread_id:
@@ -76,8 +81,22 @@ class AIAssistant:
             self._thread_id = thread.id
 
         print("We will be using this theead ID:", self._thread_id)
+
+    def get_messages_from_thread(self, thread_id=None):
+        if not thread_id:
+            thread_id = self._thread_id
+
+        messages = self.client.beta.threads.messages.list(thread_id=thread_id)
+
+        if messages and messages.data:
+            return messages.data
+        else:
+            print("No messages found in the thread.")
+            return []
+
     
     def talk_to_assistant(self, message):
+        self._ensure_assistant()
         self._ensure_thread()
 
         self.client.beta.threads.messages.create(
@@ -87,7 +106,7 @@ class AIAssistant:
         )
 
         run = self.client.beta.threads.runs.create(
-            assistant_id=self._get_assistant_id(),
+            assistant_id=self._assistant_id,
             thread_id=self._thread_id
         )
 
@@ -107,8 +126,3 @@ class AIAssistant:
                 return msg.content[0].text.value
 
         return None
-
-
-neo = AIAssistant("Neo", "gpt-4o-mini", "Your assistant for scheduling, web searches, and general assistance with British sass.")
-
-print(neo.talk_to_assistant("what do you mean we are having a deja vu? How many times have we done this?"))

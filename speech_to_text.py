@@ -1,8 +1,6 @@
 import deepspeech
 import os
-import time
 import numpy as np
-import queue
 from test_utils import logTime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +15,6 @@ if not os.path.isfile(SCORER_FILE):
     raise FileNotFoundError(f"Scorer file not found at {SCORER_FILE}")
 
 print("Loading DeepSpeech model...")
-
 
 DS_MODEL = deepspeech.Model(MODEL_FILE)
 DS_MODEL.enableExternalScorer(SCORER_FILE)
@@ -42,16 +39,15 @@ def getRealTimeTextFromAudio(audioQueue, model = DS_MODEL, sample_rate=16000):
     while True:
         data = audioQueue.get()
         if data is None:
-            break  # Exit on signal
+            break 
 
         audio = np.frombuffer(data, dtype=np.int16)
         stream.feedAudioContent(audio)
 
-        # Yield intermediate result
-        yield stream.intermediateDecode()
+        yield stream.intermediateDecode(), False
 
-    # After final chunk
-    yield stream.finishStream()
+    final_text = stream.finishStream()
+    yield final_text, True  
 
 
 # ======= Whisper Alternative (Commented) =======
@@ -68,4 +64,4 @@ def getRealTimeTextFromAudio(audioQueue, model = DS_MODEL, sample_rate=16000):
 #     logTime("Without Cuda", start_time=start_time)
 
 #     print(result["text"])
-#     return result
+#     return result th
