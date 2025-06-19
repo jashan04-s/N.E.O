@@ -12,6 +12,7 @@ from test_utils import logTime
 from speech_to_text import getRealTimeTextFromAudio, DS_MODEL
 from threading import Event
 from ai_assistant import AIAssistant
+from text_to_speech import synthesize_speech
 
 load_dotenv()
 PICOVOICE_ACCESS_KEY = os.environ.get("PICOVOICE_ACCESS_KEY")
@@ -129,6 +130,7 @@ def askNEO(message):
     response = neo.talk_to_assistant(message)
     if response:
         print("NEO says:", response)
+        synthesize_speech(response, "output.mp3")
     else:
         print("NEO did not respond.")
 
